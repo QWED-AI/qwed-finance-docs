@@ -1,0 +1,82 @@
+---
+sidebar_position: 4
+title: "QWED Finance GitHub Action for CI/CD"
+description: "Verify NPV, IRR, YTM, and Sharpe calculations in CI with the QWED Finance GitHub Action, including SARIF output for GitHub Advanced Security."
+---
+
+QWED Finance v2.1.0 includes a production-ready GitHub Action to verify financial logic in your CI/CD pipeline.
+
+## Usage
+
+### Basic verification
+
+```yaml
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify IRR calculation
+        uses: QWED-AI/qwed-finance@v2.1.0
+        with:
+          action: verify
+          verification_type: irr
+          cashflows: "-1000, 300, 400, 500, 600"
+          llm_output: "24.89%"
+```
+
+### SARIF scanning (security dashboard)
+
+QWED automatically outputs SARIF reports that integrate with GitHub Advanced Security.
+
+```yaml
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - name: Scan financial models
+        uses: QWED-AI/qwed-finance@v2.1.0
+        with:
+          action: scan
+          scan_target: ./models
+          scan_type: npv
+      
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: qwed-results.sarif
+```
+
+## Inputs
+
+| Input | Description | Required | Default |
+|-------|-------------|----------|---------|
+| `action` | Mode: `verify` (single check) or `scan` (audit files) | No | `verify` |
+| `verification_type` | `npv`, `irr`, `ytm`, `sharpe` | Yes (for verify) | - |
+| `llm_output` | The value claimed by the LLM (e.g., "15.4%") | Yes (for verify) | - |
+| `scan_target` | Directory to scan for logic files | Yes (for scan) | - |
+
+## Supported verification types
+
+| Type | Params (env vars) | Description |
+|------|-------------------|-------------|
+| `npv` | `INPUT_CASHFLOWS`, `INPUT_RATE` | Net present value |
+| `irr` | `INPUT_CASHFLOWS` | Internal rate of return |
+| `ytm` | `INPUT_FACE_VALUE`, `INPUT_COUPON_RATE`, `INPUT_PRICE`, `INPUT_YEARS` | Yield to maturity |
+| `sharpe` | `INPUT_RETURN`, `INPUT_RISK_FREE`, `INPUT_VOLATILITY` | Sharpe ratio |
+
+:::info Zero-config SARIF
+When running in `scan` mode, the action automatically generates `qwed-results.sarif`. No extra configuration needed.
+:::
+## Related extensions
+
+Use these actions to expand verification coverage across other QWED extensions.
+
+| Icon | Extension action | When to use it |
+| --- | --- | --- |
+| ⚖️ | [QWED Legal Verification](https://github.com/marketplace/actions/qwed-legal-verification) | You validate contracts, policy text, or legal citations in CI. |
+| 🧾 | [QWED Protocol Verification](https://github.com/marketplace/actions/qwed-protocol-verification) | You enforce protocol rules and deterministic behavior checks. |
+| 🛒 | [QWED Commerce Auditor](https://github.com/marketplace/actions/qwed-commerce-auditor) | You audit checkout and transaction logs for commerce workflows. |
+
+For finance-specific checks, use [QWED Finance Guard](https://github.com/marketplace/actions/qwed-finance-guard).

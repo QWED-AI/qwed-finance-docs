@@ -1,0 +1,51 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "QWED Finance",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg",
+    "href": "https://qwedai.com"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#10B981",
+    "light": "#34D399",
+    "dark": "#059669",
+    "anchors": {
+      "from": "#10B981",
+      "to": "#059669"
+    }
+  },
+  "navigation": [
+    {
+      "group": "Get Started",
+      "pages": [
+        "introduction",
+        "quickstart"
+      ]
+    },
+    {
+      "group": "QWED Finance Core",
+      "pages": [
+        "finance/overview",
+        "finance/guards",
+        "finance/design",
+        "finance/compliance",
+        "finance/action"
+      ]
+    },
+    {
+      "group": "Integrations",
+      "pages": [
+        "finance/integrations/open-responses",
+        "finance/integrations/ucp"
+      ]
+    }
+  ],
+  "footer": {
+    "socials": {
+      "github": "https://github.com/QWED-AI",
+      "x": "https://x.com/qwedai"
+    }
+  }
+}

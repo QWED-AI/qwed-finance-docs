@@ -1,0 +1,89 @@
+---
+title: "Quickstart"
+sidebarTitle: "Quickstart"
+description: "Get started with QWED Finance in Python or Node.js in under 2 minutes"
+---
+
+## Installation
+
+Install QWED Finance via Python package manager or npm:
+
+<CodeGroup>
+
+```bash Python (pip)
+pip install qwed-finance
+```
+
+```bash Node.js (npm)
+npm install @qwed-ai/finance
+```
+
+</CodeGroup>
+
+---
+
+## First Verification Check
+
+Here is how to run deterministic verification on a financial LLM calculation output:
+
+<CodeGroup>
+
+```python Python
+from qwed_finance import QWEDFinance, BondGuard, RiskGuard
+
+# Initialize QWED Finance verifier
+qwed = QWEDFinance()
+
+# Financial claim from an AI agent or LLM
+claim = {
+    "bond_yield": "0.045",
+    "face_value": 1000,
+    "price": 950.25,
+    "currency": "USD"
+}
+
+# Run deterministic verification guard
+result = qwed.verify_bond_pricing(claim)
+
+if result.is_verified:
+    print("✅ Verified clean financial calculation!")
+    print(f"Proof Ref: {result.proof_ref}")
+else:
+    print(f"🛑 Hallucination detected or rejected: {result.agent_message}")
+```
+
+```javascript Node.js / TypeScript
+import { QWEDFinance } from '@qwed-ai/finance';
+
+const qwed = new QWEDFinance();
+
+const claim = {
+  bond_yield: "0.045",
+  face_value: 1000,
+  price: 950.25,
+  currency: "USD"
+};
+
+const result = await qwed.verifyBondPricing(claim);
+
+if (result.isVerified) {
+  console.log('✅ Verification passed!', result.proofRef);
+} else {
+  console.error('🛑 Verification blocked:', result.agentMessage);
+}
+```
+
+</CodeGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Overview & Architecture" icon="book-open" href="/finance/overview">
+    Learn about the 4 pillars of financial verification and solver integration.
+  </Card>
+  <Card title="Financial Guards Guide" icon="shield-check" href="/finance/guards">
+    Explore BondGuard, DerivativesGuard, RiskGuard, FXGuard, and ComplianceGuard.
+  </Card>
+</CardGroup>
