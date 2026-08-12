@@ -2,16 +2,19 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "aspen",
   "name": "QWED Finance",
+  "colors": {
+    "primary": "#26463C",
+    "light": "#8FBBA6",
+    "dark": "#1E3830"
+  },
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
     "href": "https://qwedai.com"
   },
-  "favicon": "/favicon.svg",
-  "colors": {
-    "primary": "#10B981",
-    "light": "#34D399",
-    "dark": "#059669"
+  "favicon": {
+    "light": "/images/qwed-mark-ink-32.png",
+    "dark": "/images/qwed-mark-ink-32.png"
   },
   "navigation": {
     "tabs": [
