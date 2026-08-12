@@ -7,6 +7,13 @@
     "light": "#8FBBA6",
     "dark": "#1E3830"
   },
+  "background": {
+    "color": {
+      "dark": "#0B0E13",
+      "light": "#E7E4DA"
+    },
+    "decoration": "windows"
+  },
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",

@@ -1,11 +1,13 @@
 ---
 title: "Introduction"
 sidebarTitle: "Introduction"
-description: "Welcome to QWED Finance — Deterministic Verification for Financial AI and Agentic Pipelines"
+description: "Welcome to QWED Finance — Deterministic Verification for Financial AI and Agentic Pipelines (v6.0.0)"
+icon: "shield-check"
 ---
 
-<img className="block dark:hidden" src="/logo/light.svg" alt="QWED Finance Light Logo" />
-<img className="hidden dark:block" src="/logo/dark.svg" alt="QWED Finance Dark Logo" />
+<Note>
+**QWED Finance v6.0.0** is now live — Trust boundary completion: unified `DiagnosticResult` schema, full `Decimal`/`mpmath` precision solvers, fail-closed enforcement across `OpenResponsesIntegration`, and deterministic `proof_ref` guarantees.
+</Note>
 
 ## Overview
 
@@ -33,6 +35,22 @@ By combining LLM translation with formal solvers (**SymPy**, **Z3**, **mpmath**)
     Native support for OpenAI, LangChain, Express.js, Open-Responses, and Universal Compliance Protocol (UCP).
   </Card>
 </CardGroup>
+
+---
+
+## What's New in QWED Finance v6.0.0
+
+<AccordionGroup>
+  <Accordion title="Unified DiagnosticResult Schema" icon="shield-check" defaultOpen>
+    All financial verifiers return the 3-layer `DiagnosticResult` (`status` / `agent_message` / `developer_fields` / `proof_ref`). `VERIFIED` is a protocol guarantee backed by a non-empty, deterministic `proof_ref`.
+  </Accordion>
+  <Accordion title="Exact Decimal & mpmath Solver Migration" icon="calculator">
+    Full migration for `BondGuard`, `DerivativesGuard`, and `RiskGuard`. Option Greeks and yield calculations are exact, quantized strings rather than floating-point approximations.
+  </Accordion>
+  <Accordion title="Fail-Closed OpenResponses & AML Hardening" icon="lock">
+    Fail-closed enforcement across `OpenResponsesIntegration` and unified AML high-risk country list validation.
+  </Accordion>
+</AccordionGroup>
 
 ---
 
