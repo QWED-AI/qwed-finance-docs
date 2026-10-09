@@ -1,69 +1,77 @@
 ---
 title: "Introduction"
 sidebarTitle: "Introduction"
-description: "Welcome to QWED Finance — Deterministic Verification for Financial AI and Agentic Pipelines (v6.0.0)"
+description: "QWED Finance: deterministic verification for financial AI and agent pipelines (v3.0.1)."
 icon: "shield-check"
 ---
 
 <Note>
-**QWED Finance v6.0.0** is now live — Trust boundary completion: unified `DiagnosticResult` schema, full `Decimal`/`mpmath` precision solvers, fail-closed enforcement across `OpenResponsesIntegration`, and deterministic `proof_ref` guarantees.
+**QWED Finance v3.0.1** is the current release. It fixes three security advisories: ISO 20022 business rules now read the parsed XML, sanctions screening resists in-word perturbations, and `QueryGuard` rejects MySQL executable comments. See the [overview](/finance/overview) for details.
 </Note>
 
 ## Overview
 
-**QWED Finance** provides zero-hallucination, deterministic security and verification guards for AI financial agents, automated banking pipelines, and financial LLM applications.
+**QWED Finance** is a verification library for AI financial agents, banking pipelines, and financial LLM applications. An LLM proposes a number, a decision, a payment message, or a query; QWED Finance recomputes or checks it deterministically before your system acts on it.
 
-By combining LLM translation with formal solvers (**SymPy**, **Z3**, **mpmath**) and exact `Decimal` arithmetic, QWED Finance ensures that financial calculations, compliance rules, portfolio risks, and transaction logic are provably correct before shipping to users or executing trades.
+It combines formal and exact tools: **SymPy** for cash-flow math, **Z3** for compliance logic, **mpmath** and `Decimal` for pricing and risk, an XML/schema validator for ISO 20022 and SWIFT, and an **SQLGlot** AST parser for SQL safety.
 
-> **The Financial Guarantee**: LLM text generation is probabilistic; financial accounting is exact. QWED Finance bridges this gap by validating LLM outputs against symbolic solvers, producing cryptographic attestations and zero-hallucination guarantees.
+> **The principle:** LLM text generation is probabilistic; financial accounting is exact. QWED Finance checks LLM outputs against deterministic computations and fails closed when an input is ambiguous or malformed.
 
 ---
 
-## Key Capabilities
+## Key capabilities
 
 <CardGroup cols={2}>
-  <Card title="10 Specialized Financial Guards" icon="shield-check" href="/finance/guards">
-    Coverage across Compliance, Calendar, Derivatives, Messages, Query, Cross, Bond, FX, Risk, and ISO formats.
+  <Card title="11 verification guards" icon="shield-check" href="/finance/guards">
+    Compliance, Calendar, Derivatives, Message, ISO, Query, Cross, Bond, FX, Risk, and Trading.
   </Card>
-  <Card title="Deterministic & Exact Precision" icon="calculator" href="/finance/design">
-    Full Decimal and mpmath precision for Bond pricing, Option Greeks, IRR, NPV, and FX conversions.
+  <Card title="Exact arithmetic" icon="calculator" href="/finance/design">
+    `Decimal` and `mpmath` precision for bond pricing, option Greeks, IRR, NPV, FX, and risk metrics.
   </Card>
-  <Card title="Auditability & Compliance" icon="file-contract" href="/finance/compliance">
-    Cryptographic proof binding, AML high-risk country list validation, and SOX/GAAP audit trail generation.
+  <Card title="Receipts and audit logs" icon="file-contract" href="/finance/compliance">
+    Verification receipts with keyed HMAC-SHA256 signatures, an audit log, and AML/KYC/sanctions checks.
   </Card>
-  <Card title="Seamless Integrations" icon="plug" href="/finance/integrations/open-responses">
-    Native support for OpenAI, LangChain, Express.js, Open-Responses, and Universal Compliance Protocol (UCP).
+  <Card title="Integrations" icon="plug" href="/finance/integrations/open-responses">
+    OpenAI-compatible tool calls through Open Responses, the Universal Commerce Protocol (UCP), and a GitHub Action for CI.
   </Card>
 </CardGroup>
 
 ---
 
-## What's New in QWED Finance v6.0.0
+## What's new in v3.0.x
 
 <AccordionGroup>
-  <Accordion title="Unified DiagnosticResult Schema" icon="shield-check" defaultOpen>
-    All financial verifiers return the 3-layer `DiagnosticResult` (`status` / `agent_message` / `developer_fields` / `proof_ref`). `VERIFIED` is a protocol guarantee backed by a non-empty, deterministic `proof_ref`.
+  <Accordion title="v3.0.1: security fixes" icon="lock" defaultOpen>
+    - ISO 20022 business rules read amounts and currencies from the parsed XML tree ([GHSA-mrrj-6m2q-jch9](https://github.com/QWED-AI/qwed-finance/security/advisories/GHSA-mrrj-6m2q-jch9)).
+    - Sanctions screening folds diacritics and look-alike letters and compares separator-free names ([GHSA-mv2c-jwm9-pfrq](https://github.com/QWED-AI/qwed-finance/security/advisories/GHSA-mv2c-jwm9-pfrq)).
+    - `QueryGuard` rejects MySQL `/*! ... */` and MariaDB `/*M! ... */` executable comments ([GHSA-q8r4-6gpp-5fx2](https://github.com/QWED-AI/qwed-finance/security/advisories/GHSA-q8r4-6gpp-5fx2)).
   </Accordion>
-  <Accordion title="Exact Decimal & mpmath Solver Migration" icon="calculator">
-    Full migration for `BondGuard`, `DerivativesGuard`, and `RiskGuard`. Option Greeks and yield calculations are exact, quantized strings rather than floating-point approximations.
-  </Accordion>
-  <Accordion title="Fail-Closed OpenResponses & AML Hardening" icon="lock">
-    Fail-closed enforcement across `OpenResponsesIntegration` and unified AML high-risk country list validation.
+  <Accordion title="v3.0.0: keyed receipts and fail-closed inputs" icon="shield-check">
+    - `VerificationReceipt.get_signature(key)`: HMAC-SHA256 over all receipt fields, with no default key.
+    - ISO amount and currency limits in receipts and UCP; `verify_iso20022_payment` takes `kyc_verified`.
+    - Fail-closed AML, sanctions, amount, and message validation.
+    - **Breaking (npm):** the `@qwed-ai/finance` bridge sends JSON over stdin with runtime validation; malformed inputs are rejected.
   </Accordion>
 </AccordionGroup>
 
+See the full [changelog](https://github.com/QWED-AI/qwed-finance/blob/main/CHANGELOG.md).
+
 ---
 
-## Quick Navigation
+## Quick navigation
 
 <CardGroup cols={3}>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Get started with @qwed-ai/finance or pip install qwed-finance in 2 minutes.
+    Install `qwed-finance` or `@qwed-ai/finance` and run your first check.
   </Card>
-  <Card title="Verification Guards" icon="shield" href="/finance/guards">
-    Explore the 10 specialized financial verification guards.
+  <Card title="Verification guards" icon="shield" href="/finance/guards">
+    Explore the 11 verification guards with working examples.
   </Card>
   <Card title="CI/CD Action" icon="github" href="/finance/action">
-    Automate financial security verification in GitHub Actions.
+    Verify financial calculations in GitHub Actions.
   </Card>
 </CardGroup>
+
+<Info>
+QWED Finance is part of the QWED verification ecosystem. For the core protocol and other modules, see [docs.qwedai.com](https://docs.qwedai.com).
+</Info>
