@@ -1,89 +1,104 @@
 ---
 title: "Quickstart"
 sidebarTitle: "Quickstart"
-description: "Get started with QWED Finance in Python or Node.js in under 2 minutes"
+description: "Install QWED Finance 3.0.1 and verify an LLM's financial calculation in Python or Node.js."
 ---
 
 ## Installation
 
-Install QWED Finance v6.0.0 via Python package manager or npm:
-
 <CodeGroup>
 
 ```bash Python (pip)
-pip install qwed-finance==6.0.0
+pip install qwed-finance==3.0.1
 ```
 
 ```bash Node.js (npm)
-npm install @qwed-ai/finance@latest
+npm install @qwed-ai/finance@3.0.1
+pip install qwed-finance==3.0.1
 ```
 
 </CodeGroup>
 
+<Note>
+The npm package is a TypeScript wrapper that runs the Python package in a child process. Install `qwed-finance` with Python 3.11 or later on the same machine.
+</Note>
+
 ---
 
-## First Verification Check
+## First verification
 
-Here is how to run deterministic verification on a financial LLM calculation output:
+An LLM claims the NPV of a project. QWED Finance recomputes it and tells you whether the claim is correct.
 
 <CodeGroup>
 
 ```python Python
-from qwed_finance import QWEDFinance, BondGuard, RiskGuard
+from qwed_finance import FinanceVerifier
 
-# Initialize QWED Finance verifier
-qwed = QWEDFinance()
+verifier = FinanceVerifier()
 
-# Financial claim from an AI agent or LLM
-claim = {
-    "bond_yield": "0.045",
-    "face_value": 1000,
-    "price": 950.25,
-    "currency": "USD"
-}
+# Cash flows: invest 1,000, then receive 300, 400, 500, 600. Discount rate 10%.
+result = verifier.verify_npv(
+    cashflows=[-1000, 300, 400, 500, 600],
+    rate=0.10,
+    llm_output="$388.77",  # the LLM's claim
+)
 
-# Run deterministic verification guard
-result = qwed.verify_bond_pricing(claim)
-
-if result.is_verified:
-    print("✅ Verified clean financial calculation!")
-    print(f"Proof Ref: {result.proof_ref}")
+if result.verified:
+    print(f"Verified: {result.computed_value}")
 else:
-    print(f"🛑 Hallucination detected or rejected: {result.agent_message}")
+    print(f"Rejected: LLM said {result.llm_value}, QWED computed {result.computed_value}")
+# Verified: $388.77
 ```
 
 ```javascript Node.js / TypeScript
-import { QWEDFinance } from '@qwed-ai/finance';
+import { FinanceVerifier } from '@qwed-ai/finance';
 
-const qwed = new QWEDFinance();
+const verifier = new FinanceVerifier();
 
-const claim = {
-  bond_yield: "0.045",
-  face_value: 1000,
-  price: 950.25,
-  currency: "USD"
-};
+try {
+  const result = await verifier.verifyNPV([-1000, 300, 400, 500, 600], 0.1, '$388.77');
 
-const result = await qwed.verifyBondPricing(claim);
-
-if (result.isVerified) {
-  console.log('✅ Verification passed!', result.proofRef);
-} else {
-  console.error('🛑 Verification blocked:', result.agentMessage);
+  if (result.verified) {
+    console.log('Verified:', result.computed_value);
+  } else {
+    console.log('Rejected: QWED computed', result.computed_value);
+  }
+  // Verified: $388.77
+} catch (err) {
+  // Malformed inputs and bridge failures throw: treat them as "not verified".
+  console.error('Verification failed closed:', err.message);
 }
 ```
 
 </CodeGroup>
 
+Change the claim to `"$450.00"` and the result is rejected, with `computed_value` still `"$388.77"`.
+
 ---
 
-## Next Steps
+## Check a compliance decision
+
+```python
+from qwed_finance import ComplianceGuard
+
+guard = ComplianceGuard()
+
+# The LLM approved a 15,000 USD transfer without flagging it for AML review
+result = guard.verify_aml_flag(amount=15000, country_code="US", llm_flagged=False)
+
+print(result.compliant)  # False: amounts at or above 10,000 must be flagged
+print(result.proof)
+```
+
+---
+
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Overview & Architecture" icon="book-open" href="/finance/overview">
-    Learn about the 4 pillars of financial verification and solver integration.
+  <Card title="Overview and architecture" icon="book-open" href="/finance/overview">
+    How the guards, engines, and receipts fit together.
   </Card>
-  <Card title="Financial Guards Guide" icon="shield-check" href="/finance/guards">
-    Explore BondGuard, DerivativesGuard, RiskGuard, FXGuard, and ComplianceGuard.
+  <Card title="The 11 guards" icon="shield-check" href="/finance/guards">
+    BondGuard, DerivativesGuard, RiskGuard, FXGuard, ComplianceGuard, and more.
   </Card>
 </CardGroup>
