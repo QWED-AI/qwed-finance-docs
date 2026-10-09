@@ -7,23 +7,57 @@
     "light": "#8FBBA6",
     "dark": "#1E3830"
   },
-  "background": {
-    "color": {
-      "dark": "#0B0E13",
-      "light": "#E7E4DA"
-    },
-    "decoration": "windows"
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg",
-    "href": "https://qwedai.com"
-  },
   "favicon": {
     "light": "/images/qwed-mark-ink-32.png",
     "dark": "/images/qwed-mark-ink-32.png"
   },
+  "logo": {
+    "light": "/images/qwed-mark-pine.svg",
+    "dark": "/images/qwed-mark-pine.svg",
+    "href": "/introduction"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "QWED Docs",
+        "href": "https://docs.qwedai.com"
+      },
+      {
+        "label": "Support",
+        "href": "mailto:rahul@qwedai.com"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get Started",
+      "href": "/quickstart"
+    }
+  },
   "navigation": {
+    "global": {
+      "anchors": [
+        {
+          "anchor": "GitHub",
+          "icon": "github",
+          "href": "https://github.com/QWED-AI/qwed-finance"
+        },
+        {
+          "anchor": "Marketplace",
+          "icon": "shop",
+          "href": "https://github.com/marketplace/actions/qwed-finance-guard"
+        },
+        {
+          "anchor": "PyPI",
+          "icon": "python",
+          "href": "https://pypi.org/project/qwed-finance/"
+        },
+        {
+          "anchor": "npm",
+          "icon": "npm",
+          "href": "https://www.npmjs.com/package/@qwed-ai/finance"
+        }
+      ]
+    },
     "tabs": [
       {
         "tab": "QWED Finance",
@@ -58,8 +92,117 @@
   },
   "footer": {
     "socials": {
+      "x": "https://x.com/Qwed_ai",
       "github": "https://github.com/QWED-AI",
-      "x": "https://x.com/qwedai"
+      "linkedin": "https://www.linkedin.com/company/qwed",
+      "website": "https://qwedai.com"
+    },
+    "links": [
+      {
+        "header": "QWED Finance",
+        "items": [
+          {
+            "label": "Quickstart",
+            "href": "/quickstart"
+          },
+          {
+            "label": "The 11 guards",
+            "href": "/finance/guards"
+          },
+          {
+            "label": "GitHub Action",
+            "href": "/finance/action"
+          },
+          {
+            "label": "Changelog",
+            "href": "https://github.com/QWED-AI/qwed-finance/blob/main/CHANGELOG.md"
+          }
+        ]
+      },
+      {
+        "header": "Ecosystem",
+        "items": [
+          {
+            "label": "QWED Docs",
+            "href": "https://docs.qwedai.com"
+          },
+          {
+            "label": "QWED UCP",
+            "href": "https://docs.qwedai.com/ucp/overview"
+          },
+          {
+            "label": "QWED MCP",
+            "href": "https://docs.qwedai.com/mcp/overview"
+          },
+          {
+            "label": "Open Responses",
+            "href": "https://docs.qwedai.com/open-responses/overview"
+          },
+          {
+            "label": "QWED Legal",
+            "href": "https://docs.qwedai.com/legal/overview"
+          },
+          {
+            "label": "QWED A2A",
+            "href": "https://docs.qwedai.com/a2a/overview"
+          }
+        ]
+      },
+      {
+        "header": "Resources",
+        "items": [
+          {
+            "label": "Releases",
+            "href": "https://docs.qwedai.com/releases"
+          },
+          {
+            "label": "Changelog",
+            "href": "https://docs.qwedai.com/changelog"
+          },
+          {
+            "label": "License",
+            "href": "https://qwedai.com/license"
+          },
+          {
+            "label": "Privacy Policy",
+            "href": "https://qwedai.com/privacy"
+          },
+          {
+            "label": "Terms",
+            "href": "https://qwedai.com/terms"
+          }
+        ]
+      }
+    ]
+  },
+  "description": "QWED Finance documentation: deterministic verification for financial AI, banking agents, and payment pipelines, with 11 guards, receipts, and a GitHub Action.",
+  "banner": {
+    "content": "**QWED is now a GitHub Technology Partner** — QWED Security and verification, natively integrated with GitHub. [Browse the Marketplace listing](https://github.com/marketplace/qwed-security)",
+    "dismissible": true
+  },
+  "integrations": {
+    "gtm": {
+      "tagId": "GTM-WFWSMKGZ"
     }
+  },
+  "seo": {
+    "indexing": "all",
+    "metatags": {
+      "canonical": "https://finance.qwedai.com",
+      "og:image": "https://qwedai.com/og-docs.png",
+      "og:site_name": "QWED Finance",
+      "og:type": "website",
+      "twitter:card": "summary_large_image"
+    }
+  },
+  "appearance": {
+    "default": "system"
+  },
+  "background": {
+    "color": {
+      "dark": "#0B0E13",
+      "light": "#E7E4DA"
+    },
+    "decoration": "windows"
   }
 }
