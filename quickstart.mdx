@@ -20,7 +20,17 @@ pip install qwed-finance==3.0.1
 </CodeGroup>
 
 <Note>
-The npm package is a TypeScript wrapper that runs the Python package in a child process. Install `qwed-finance` with Python 3.11 or later on the same machine.
+The npm package is a TypeScript wrapper that runs the Python package in a child process. Install `qwed-finance` with Python 3.11 or later on the same machine, using the same interpreter that Node.js will start.
+
+By default the wrapper runs `python`. If your Python 3.11+ interpreter has another name, such as `python3` or a virtual-environment path, install the package with it and pass it to the constructor:
+
+```bash
+python3 -m pip install qwed-finance==3.0.1
+```
+
+```javascript
+const verifier = new FinanceVerifier('python3');
+```
 </Note>
 
 ---
@@ -50,7 +60,9 @@ else:
 # Verified: $388.77
 ```
 
-```javascript Node.js / TypeScript
+```javascript verify-npv.mjs
+// Save as an .mjs file, or set "type": "module" in package.json,
+// so Node.js accepts the import syntax and top-level await.
 import { FinanceVerifier } from '@qwed-ai/finance';
 
 const verifier = new FinanceVerifier();
@@ -66,7 +78,7 @@ try {
   // Verified: $388.77
 } catch (err) {
   // Malformed inputs and bridge failures throw: treat them as "not verified".
-  console.error('Verification failed closed:', err.message);
+  console.error('Verification failed closed:', err instanceof Error ? err.message : String(err));
 }
 ```
 
