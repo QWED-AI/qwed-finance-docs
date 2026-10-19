@@ -9,7 +9,7 @@ description: "How QWED Finance checks what financial AI produces: the 11 guards,
 
 QWED Finance is a verification library for financial AI. A language model proposes a figure, a decision, a payment message or a query; QWED Finance recomputes or checks it with deterministic code before your system acts on it. It does not make the model more accurate. It decides whether a given output may be used.
 
-It combines exact and formal tools: SymPy for cash-flow maths, Z3 for the AML rule, mpmath and `Decimal` for pricing and risk, XML parsing with required-element rules for ISO 20022 and SWIFT, and the SQLGlot parser for SQL safety.
+It combines formal and high-precision tools: SymPy for cash-flow maths, Z3 for the AML rule, mpmath and `Decimal` for pricing and risk, XML parsing with required-element rules for ISO 20022, field checks on the framed text of SWIFT MT messages, and the SQLGlot parser for SQL safety.
 
 **New in v3.0.1: security fixes.**
 
@@ -27,7 +27,7 @@ Language models get arithmetic and strict rules wrong, and in finance close enou
 - **What QWED Finance does:** it recomputes the IRR from the cash flows and rejects the claim when it differs by more than the tolerance. It reports the value it computed; it does not rewrite the model's answer.
 
 <Note>
-`verify_irr` solves NPV = 0 with SymPy and uses the first real root above -100%. Cash flows that change sign more than once can have several IRRs, and the first root is not always the one you mean: check those with `verify_npv` at each candidate rate. When SymPy finds no real root, the method falls back to a numeric solver and reports `verification_mode="HEURISTIC"` instead of `"SYMBOLIC"`.
+`verify_irr` solves NPV = 0 with SymPy and uses the first real root above -100%. Cash flows that change sign more than once can have several IRRs, and the first root is not always the one you mean: check those with `verify_npv` at each candidate rate. When SymPy finds no real root, the method falls back to a numeric solver and reports `verification_mode="HEURISTIC"` instead of `"SYMBOLIC"`. A claim that is not a number, such as `"not a rate"`, raises `ValueError`: treat that as a rejection.
 </Note>
 
 ## Key features
@@ -43,7 +43,7 @@ Language models get arithmetic and strict rules wrong, and in finance close enou
 |--------|-------|--------|----------|
 | **Calculation** | Finance, Calendar, Derivatives, Bond, FX, Risk | SymPy, `Decimal`, mpmath | NPV, IRR, day counts, option prices, YTM, VaR |
 | **Rules** | Compliance | Z3 for AML flags; rule checks for KYC, limits and sanctions decisions | AML flags, KYC completeness, transaction limits, sanctions decisions |
-| **Messages** | Message, ISO | XML parsing and required-element rules, JSON Schema | ISO 20022, SWIFT MT |
+| **Messages** | Message, ISO | XML parsing and required-element rules (ISO 20022), field checks (SWIFT MT), JSON Schema (ISO JSON) | ISO 20022, SWIFT MT |
 | **Data safety** | Query | SQLGlot | Read-only queries, table and column allow-lists, injection patterns |
 
 ## Quick example
@@ -102,14 +102,14 @@ flowchart TB
 | `CalendarGuard` | `Decimal` day-count arithmetic |
 | `DerivativesGuard` | mpmath (30 decimal places) |
 | `BondGuard`, `FXGuard`, `RiskGuard`, `TradingGuard` | `Decimal` |
-| `MessageGuard` | defusedxml parsing and required-element rules |
+| `MessageGuard` | defusedxml parsing and required-element rules for ISO 20022; tagged-field checks for SWIFT MT |
 | `ISOGuard` | JSON Schema |
 | `QueryGuard` | SQLGlot |
 | `CrossGuard` | combines Message, Compliance and Query, and issues receipts |
 
 ### Payment check with UCP
 
-`UCPIntegration.verify_payment_token()` runs four checks: amount limits, currency, AML threshold and KYC status. Sanctions screening is part of `verify_iso20022_payment()`, which takes a sanctions list.
+`UCPIntegration.verify_payment_token()` runs four checks: amount limits, currency, AML threshold and KYC status. When an AML flag is needed the status is `PENDING_REVIEW`, even if another check also failed; `BLOCKED` means a check failed with no AML flag. Sanctions screening is part of `verify_iso20022_payment()`, which takes a sanctions list.
 
 ```mermaid
 sequenceDiagram
@@ -132,7 +132,7 @@ sequenceDiagram
     else Amount at or above the AML threshold
         QWED-->>Agent: PENDING_REVIEW
         Agent-->>User: "Flagged for compliance review"
-    else A limit, currency or KYC check fails
+    else A limit, currency or KYC check fails, and no AML flag
         QWED-->>Agent: BLOCKED, with violations
         Agent-->>User: "Transfer not made"
     end
@@ -160,7 +160,7 @@ QWED Finance checks each of these with deterministic code:
 
 The checks implement parts of these rules and standards. Using QWED Finance does not make a system compliant with them: that is for your own compliance review.
 
-- **BSA/FinCEN**: the 10,000 currency transaction report threshold in `verify_aml_flag`
+- **BSA/FinCEN**: the 10,000 currency transaction report threshold in `verify_aml_flag` (amounts are compared as given; see [the Compliance guard](/finance/guards))
 - **OFAC and other sanctions lists**: name screening against a list you supply
 - **ISO 20022 and SWIFT MT**: message structure and business-rule checks
 - **RBI FREE-AI (India)**: receipts and audit logs as records of how an AI output was checked

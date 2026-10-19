@@ -79,7 +79,7 @@ graph TB
 
 ## Verification flow
 
-Every check follows the same path. Input that cannot be parsed, or that is ambiguous, fails closed: it is rejected, never passed through as if it were correct.
+Every check follows the same path. Input that cannot be parsed, or that is ambiguous, fails closed: it is rejected, never passed through as if it were correct. Most guards return a rejected result; some methods raise instead (for example `verify_irr` raises `ValueError` for a claim that is not a number), so treat an exception from a guard as a rejection too.
 
 ```mermaid
 flowchart TD
@@ -224,7 +224,7 @@ classDiagram
 
 - **Python:** install `qwed-finance` and call the guards from your service.
 - **Node.js:** `@qwed-ai/finance` runs the Python package in a child process and passes JSON over stdin; install `qwed-finance` on the same machine. See the [Quickstart](/quickstart).
-- **Receipts and audit logs:** `AuditLog` keeps receipts in memory. Export them with `export_json()` and store them where you keep your other audit records, with the signatures stored separately.
+- **Receipts and audit logs:** `AuditLog` keeps receipts in memory. `export_json()` returns all of them as one JSON array, which suits reporting. To check receipts later, export each one with `to_json()` beside its signature, one pair per receipt, as shown in [Compliance and auditing](/finance/compliance).
 
 ---
 
@@ -234,9 +234,9 @@ classDiagram
 
 The same input gives the same verdict. No sampling, no confidence scores.
 
-### 2. Exact over approximate
+### 2. Solvers and high precision over probability
 
-Use solvers and exact arithmetic (Z3, SymPy, mpmath, `Decimal`) instead of floating point or probabilistic scores. Where a numeric method is the only option, as in the IRR fallback, the result says so.
+Use solvers (Z3, SymPy) and high-precision arithmetic (mpmath, `Decimal`) instead of probabilistic confidence scores. The numerical checks run at a fixed, finite precision (30 decimal places for `DerivativesGuard`, 50 digits for `BondGuard`) and accept claims within a stated tolerance: they are repeatable, not exact symbolic answers. The IRR fallback reports `verification_mode="HEURISTIC"`.
 
 ### 3. Audit where it matters
 

@@ -222,17 +222,26 @@ for tool_call in response.choices[0].message.tool_calls:
 Register your own verified tools. A `verification_fn` is **required**: tools without one are rejected.
 
 ```python
+from decimal import Decimal
 from qwed_finance import VerifiedToolCall, ToolCallStatus
 
 def verify_my_calculation(args):
-    # Your verification logic here
-    computed = do_deterministic_math(args)
+    # Recompute the value, then compare it with the model's claim.
+    computed = do_deterministic_math(args)  # returns a Decimal
+    claimed = args.get("claimed_value")
+    if claimed is None or Decimal(str(claimed)) != computed:
+        return VerifiedToolCall(
+            status=ToolCallStatus.REJECTED,
+            tool_name="my_tool",
+            original_args=args,
+            error=f"claimed {claimed}, computed {computed}",
+        )
     return VerifiedToolCall(
         status=ToolCallStatus.APPROVED,
         tool_name="my_tool",
         original_args=args,
         verified_args=args,
-        result={"value": computed}
+        result={"value": str(computed)},
     )
 
 qwed.register_tool(

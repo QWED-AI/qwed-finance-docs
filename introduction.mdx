@@ -13,7 +13,7 @@ icon: "shield-check"
 
 **QWED Finance** is a verification library for AI financial agents, banking pipelines, and financial LLM applications. An LLM proposes a number, a decision, a payment message, or a query; QWED Finance recomputes or checks it deterministically before your system acts on it.
 
-It combines formal and exact tools: **SymPy** for cash-flow maths, **Z3** for the AML rule, **mpmath** and `Decimal` for pricing and risk, XML parsing with required-element rules for ISO 20022 and SWIFT, and the **SQLGlot** parser for SQL safety.
+It combines formal and high-precision tools: **SymPy** for cash-flow maths, **Z3** for the AML rule, **mpmath** and `Decimal` for pricing and risk, XML parsing with required-element rules for ISO 20022, field checks on the framed text of SWIFT MT messages, and the **SQLGlot** parser for SQL safety.
 
 > **The principle:** LLM text generation is probabilistic; financial accounting is exact. QWED Finance checks LLM outputs against deterministic computations and fails closed when an input is ambiguous or malformed.
 

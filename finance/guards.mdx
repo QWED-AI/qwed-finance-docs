@@ -30,12 +30,14 @@ result = guard.verify_aml_flag(
 
 | Method | Description |
 | --- | --- |
-| `verify_aml_flag(amount, country_code, llm_flagged)` | Check the flag against the 10,000 threshold (at or above) and high-risk countries |
+| `verify_aml_flag(amount, country_code, llm_flagged, jurisdiction="USA")` | Check the flag against the 10,000 threshold (at or above) and high-risk countries |
 | `verify_kyc_complete(has_id, has_address_proof, has_tax_id, llm_approved)` | Validate KYC document requirements |
 | `verify_transaction_limit(amount, daily_limit, daily_total, llm_approved)` | Enforce daily limits |
 | `verify_sanctions_check(entity_name, is_on_sanctions_list, llm_approved)` | Check an approval decision against a sanctions-list result |
 
 <Note>
+`verify_aml_flag` takes no currency: it compares `amount` with the threshold for `jurisdiction` (`"USA"`, `"EU"` or `"UK"`, each 10,000 in that jurisdiction's currency). Pass the amount in that currency, converting it first if needed.
+
 Since v3.0.0, `verify_aml_flag` fails closed: country codes must be canonical ISO alpha-2 codes, and malformed, non-finite, or missing amounts are rejected instead of passing.
 </Note>
 
@@ -145,7 +147,7 @@ Decimal(greeks["delta"]) * Decimal(str(notional))  # "0.3772" → exact; str() a
 
 ## 4. Message guard (ISO 20022 and SWIFT)
 
-**Purpose:** Check that ISO 20022 and SWIFT messages parse and carry the elements and fields their type requires, before they are sent. This is a structural check with fixed rules, not full XSD schema validation.
+**Purpose:** Check that a message carries what its type requires before it is sent: ISO 20022 XML is parsed and checked for required elements; SWIFT MT text is checked field by field (it is not XML). These are structural checks with fixed rules, not full XSD schema validation.
 
 ```python
 from qwed_finance import MessageGuard, MessageType
@@ -216,7 +218,7 @@ result = guard.verify_payment_message(
 
 ### Why JSON vs. XML?
 
-`MessageGuard` checks the XML and SWIFT MT forms. `ISOGuard` checks the same fields when an agent exchanges them as JSON.
+`MessageGuard` checks ISO 20022 XML, including transaction elements such as `CdtTrfTxInf`, and SWIFT MT text. `ISOGuard` is a lighter check for JSON messages: it validates the four required top-level fields (`MsgId`, `CreDtTm`, `NbOfTxs`, `TtlIntrBkSttlmAmt`) against a JSON Schema. A JSON message that passes `ISOGuard` has not been checked for everything `MessageGuard` requires.
 
 ---
 
@@ -333,7 +335,11 @@ result = guard.verify_ytm(
 ```
 
 <Note>
-`BondGuard` assumes semi-annual coupons: `coupon_rate` is annual, paid in two halves, and YTM is the bond-equivalent annual yield. For the bond above, an annual-coupon calculation gives 5.6687%, so check that your model and your data use the same convention.
+`verify_ytm()` and `verify_duration()` default to semi-annual coupons (`frequency=2`): `coupon_rate` is annual, paid in two halves, and YTM is the bond-equivalent annual yield. Pass `frequency=1` for annual coupons, or `4` for quarterly. For the bond above, annual coupons give 5.6687%, so pass the frequency your bond actually pays.
+
+```python
+guard.verify_ytm(face_value=1000, coupon_rate=0.05, price=950, years_to_maturity=10, llm_ytm="5.67%", frequency=1)
+```
 </Note>
 
 ### Rate format rules
