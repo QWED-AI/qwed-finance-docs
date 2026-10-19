@@ -3,9 +3,9 @@
   "theme": "aspen",
   "name": "QWED Finance",
   "colors": {
-    "primary": "#111111",
-    "light": "#F2F2F2",
-    "dark": "#616161"
+    "primary": "#2340D9",
+    "light": "#9AABFF",
+    "dark": "#3A56E6"
   },
   "fonts": {
     "heading": {
@@ -21,8 +21,8 @@
     "dark": "/images/brand/favicon-white.png"
   },
   "logo": {
-    "light": "/images/brand/qwed-lockup.svg",
-    "dark": "/images/brand/qwed-lockup-white.svg",
+    "light": "/images/brand/qwed-finance-lockup.svg",
+    "dark": "/images/brand/qwed-finance-lockup-white.svg",
     "href": "/introduction"
   },
   "navbar": {
@@ -190,13 +190,8 @@
   },
   "description": "QWED Finance documentation: deterministic verification for financial AI, banking agents, and payment pipelines, with 11 guards, receipts, and a GitHub Action.",
   "banner": {
-    "content": "**QWED is now a GitHub Technology Partner** — QWED Security and verification, natively integrated with GitHub. [Browse the Marketplace listing](https://github.com/marketplace/qwed-security)",
+    "content": "**QWED Finance v3.0.1** fixes three security advisories in ISO 20022 rules, sanctions screening and SQL checks. [See what changed](/finance/overview)",
     "dismissible": true
-  },
-  "integrations": {
-    "gtm": {
-      "tagId": "GTM-WFWSMKGZ"
-    }
   },
   "seo": {
     "indexing": "all",
@@ -205,7 +200,8 @@
       "og:image": "https://finance.qwedai.com/images/brand/og-finance.png",
       "og:site_name": "QWED Finance",
       "og:type": "website",
-      "twitter:card": "summary_large_image"
+      "twitter:card": "summary_large_image",
+      "twitter:site": "@Qwed_ai"
     }
   },
   "appearance": {
