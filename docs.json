@@ -28,8 +28,8 @@
   "navbar": {
     "links": [
       {
-        "label": "qwedai.com",
-        "href": "https://qwedai.com"
+        "label": "qwedai.tech",
+        "href": "https://qwedai.tech"
       },
       {
         "label": "QWED Docs",
@@ -108,7 +108,7 @@
       "x": "https://x.com/Qwed_ai",
       "github": "https://github.com/QWED-AI",
       "linkedin": "https://www.linkedin.com/company/qwed",
-      "website": "https://qwedai.com"
+      "website": "https://qwedai.tech"
     },
     "links": [
       {
@@ -174,15 +174,15 @@
           },
           {
             "label": "License",
-            "href": "https://qwedai.com/license"
+            "href": "https://qwedai.tech/license"
           },
           {
             "label": "Privacy Policy",
-            "href": "https://qwedai.com/privacy"
+            "href": "https://qwedai.tech/privacy"
           },
           {
             "label": "Terms",
-            "href": "https://qwedai.com/terms"
+            "href": "https://qwedai.tech/terms"
           }
         ]
       }
@@ -196,8 +196,8 @@
   "seo": {
     "indexing": "all",
     "metatags": {
-      "canonical": "https://finance.qwedai.com",
-      "og:image": "https://finance.qwedai.com/images/brand/og-finance.png",
+      "canonical": "https://finance.qwedai.tech",
+      "og:image": "https://finance.qwedai.tech/images/brand/og-finance.png",
       "og:site_name": "QWED Finance",
       "og:type": "website",
       "twitter:card": "summary_large_image",
