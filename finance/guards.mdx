@@ -1,28 +1,28 @@
 ---
 sidebar_position: 2
-title: "QWED Finance guards for financial AI verification"
+title: "The 11 guards for financial AI verification"
 sidebarTitle: "The 11 guards"
 description: "The 11 QWED Finance guards: Compliance, Calendar, Derivatives, Message, ISO, Query, Cross, Bond, FX, Risk, and Trading, with verified examples for v3.0.1."
 ---
 
-QWED-Finance uses **Neurosymbolic AI** - combining neural (LLM) outputs with symbolic (math/logic) verification.
+Each guard checks one kind of financial output with deterministic code: a model's claim goes in, and the guard recomputes or checks it before your system uses it. Your code chooses which guard to call.
 
-## 1. Compliance guard (Z3)
+## 1. Compliance guard
 
-**Purpose:** Verify KYC/AML regulatory decisions using formal boolean logic.
+**Purpose:** Check AML, KYC, transaction-limit and sanctions decisions against fixed rules. The AML check uses the Z3 solver; the other three are rule checks.
 
 ```python
 from qwed_finance import ComplianceGuard
 
 guard = ComplianceGuard()
 
-# AML Threshold Check (BSA/FinCEN)
+# AML threshold check (BSA/FinCEN, 10,000)
 result = guard.verify_aml_flag(
     amount=15000,
     country_code="US",
     llm_flagged=True
 )
-# result.compliant = True ✅
+# result.compliant = True
 # result.proof = "Z3: LLM decision matches regulatory requirement"
 ```
 
@@ -30,7 +30,7 @@ result = guard.verify_aml_flag(
 
 | Method | Description |
 | --- | --- |
-| `verify_aml_flag(amount, country_code, llm_flagged)` | Check the CTR threshold (\$10,000) and high-risk countries |
+| `verify_aml_flag(amount, country_code, llm_flagged)` | Check the flag against the 10,000 threshold (at or above) and high-risk countries |
 | `verify_kyc_complete(has_id, has_address_proof, has_tax_id, llm_approved)` | Validate KYC document requirements |
 | `verify_transaction_limit(amount, daily_limit, daily_total, llm_approved)` | Enforce daily limits |
 | `verify_sanctions_check(entity_name, is_on_sanctions_list, llm_approved)` | Check an approval decision against a sanctions-list result |
@@ -69,7 +69,7 @@ result = guard.verify_day_count(
     llm_days=180,
     convention=DayCountConvention.THIRTY_360
 )
-# result.verified = True ✅
+# result.verified = True
 ```
 
 ### Supported conventions
@@ -88,7 +88,7 @@ Other methods: `verify_day_count_fraction()`, `verify_accrued_interest()`, `veri
 
 ## 3. Derivatives guard (Black-Scholes)
 
-**Purpose:** Options pricing and margin verification using pure calculus.
+**Purpose:** Check option prices, Greeks and margin figures, computed with mpmath.
 
 ```python
 from qwed_finance import DerivativesGuard, OptionType
@@ -105,7 +105,7 @@ result = guard.verify_black_scholes(
     option_type=OptionType.CALL,
     llm_price="$2.48"
 )
-# result.verified = True ✅
+# result.verified = True
 # result.computed_price = "$2.48"
 # result.greeks = {"delta": "0.3772", "gamma": "0.037988", "theta": "-0.0256", "vega": "0.1899", "rho": "0.0881"}
 ```
@@ -123,11 +123,11 @@ result = guard.verify_black_scholes(
 ### Arbitrary-precision arithmetic
 
 <Info>
-**Since the Decimal/mpmath migration:** `DerivativesGuard` uses `mpmath` (30 decimal places) for all transcendental functions — `log`, `exp`, `sqrt`, and `erf` — replacing IEEE-754 `math.*` calls. The standard normal CDF and PDF (`_norm_cdf`, `_norm_pdf`) are now exact to 30 dp, and `verify_margin_call` and `verify_put_call_parity` compare values in `Decimal` space.
+**Since v2.1.0:** `DerivativesGuard` uses `mpmath` (30 decimal places) for all transcendental functions (`log`, `exp`, `sqrt` and `erf`) instead of IEEE-754 `math.*` calls. The standard normal CDF and PDF (`_norm_cdf`, `_norm_pdf`) are computed to 30 decimal places, and `verify_margin_call` and `verify_put_call_parity` compare values in `Decimal` space.
 </Info>
 
 <Warning>
-**Breaking change — Greeks are now `str`, not `float`.** Each Greek is `Decimal.quantize()`'d and returned as a string to preserve precision across serialization boundaries. Cast explicitly if you need a numeric type:
+**Breaking change in v2.1.0: Greeks are `str`, not `float`.** Each Greek is `Decimal.quantize()`'d and returned as a string to preserve precision across serialisation boundaries. Cast explicitly if you need a numeric type:
 
 ```python
 # Before
@@ -143,9 +143,9 @@ Decimal(greeks["delta"]) * Decimal(str(notional))  # "0.3772" → exact; str() a
 
 ---
 
-## 4. Message guard (XML schema)
+## 4. Message guard (ISO 20022 and SWIFT)
 
-**Purpose:** Validate ISO 20022 and SWIFT messages before transmission.
+**Purpose:** Check that ISO 20022 and SWIFT messages parse and carry the elements and fields their type requires, before they are sent. This is a structural check with fixed rules, not full XSD schema validation.
 
 ```python
 from qwed_finance import MessageGuard, MessageType
@@ -194,7 +194,7 @@ result = guard.verify_swift_mt(
 
 ## 5. ISOGuard (JSON schema)
 
-**Purpose:** Enforce ISO 20022 compliance for JSON-based Agentic Banking.
+**Purpose:** Check JSON payment messages shaped after ISO 20022 against a JSON Schema.
 
 ```python
 from qwed_finance import ISOGuard
@@ -211,18 +211,18 @@ result = guard.verify_payment_message(
     },
     msg_type="pacs.008"
 )
-# result.verified = True ✅
+# result.verified = True
 ```
 
 ### Why JSON vs. XML?
 
-While `MessageGuard` handles traditional XML SWIFT messages, `ISOGuard` enables **Modern Banking Agents** to speak the same standard using lightweight JSON.
+`MessageGuard` checks the XML and SWIFT MT forms. `ISOGuard` checks the same fields when an agent exchanges them as JSON.
 
 ---
 
 ## 6. Query guard (SQLGlot)
 
-**Purpose:** Prevent SQL injection and unauthorized data access.
+**Purpose:** Check model-written SQL before it runs: writes, tables and columns outside an allow-list, and injection patterns.
 
 ```python
 from qwed_finance import QueryGuard
@@ -233,7 +233,7 @@ guard = QueryGuard(allowed_tables={"transactions", "accounts"})
 result = guard.verify_readonly_safety(
     "DELETE FROM users WHERE id=1"
 )
-# result.safe = False ❌
+# result.safe = False
 # result.violations = ["Mutation detected: DELETE statement"]
 ```
 
@@ -267,7 +267,7 @@ Queries that SQLGlot cannot parse fail closed with an `SQL parse error` violatio
 
 ## 7. Cross-guard (multi-layer)
 
-**Purpose:** Combine multiple guards to verify every component.
+**Purpose:** Run several guards on one message or query and return their results together, with receipts.
 
 ```python
 from qwed_finance import CrossGuard
@@ -297,7 +297,7 @@ result = guard.check_business_rules(
     pacs008_xml,
     {"max_amount": 1000000, "positive_amount": True, "allowed_currencies": ["USD", "EUR"]}
 )
-# result.passed = False ❌
+# result.passed = False
 # result.violations = ["Amount 2500000 exceeds max 1000000"]
 ```
 
@@ -313,7 +313,7 @@ result = guard.check_business_rules(
 
 ## 8. Bond guard (yield analytics)
 
-**Purpose:** Verify fixed income calculations like Yield to Maturity (YTM) and duration using Newton-Raphson.
+**Purpose:** Check fixed-income figures such as yield to maturity (YTM) and duration, solved with Newton-Raphson.
 
 ```python
 from qwed_finance import BondGuard
@@ -328,9 +328,13 @@ result = guard.verify_ytm(
     years_to_maturity=10,
     llm_ytm="5.66%"
 )
-# result.verified = True ✅ (within the default 0.5% tolerance)
+# result.verified = True (within the default 0.5% tolerance)
 # result.computed_value = "5.6617%"
 ```
+
+<Note>
+`BondGuard` assumes semi-annual coupons: `coupon_rate` is annual, paid in two halves, and YTM is the bond-equivalent annual yield. For the bond above, an annual-coupon calculation gives 5.6687%, so check that your model and your data use the same convention.
+</Note>
 
 ### Rate format rules
 
@@ -345,13 +349,13 @@ result = guard.verify_ytm(
 | `"1.5"` | `1.5` | No `%` → use as-is (150% for distressed debt) |
 
 ```python
-# ✅ Correct: use explicit % for percentage values
+# Correct: use explicit % for percentage values
 guard.verify_ytm(..., llm_ytm="5.25%")
 
-# ✅ Correct: use decimal fraction directly
+# Correct: use decimal fraction directly
 guard.verify_ytm(..., llm_ytm="0.0525")
 
-# ⚠️ Breaking: "5.25" now means 525%, NOT 5.25%
+# Breaking: "5.25" now means 525%, NOT 5.25%
 # Use "5.25%" instead
 ```
 
@@ -362,9 +366,9 @@ The same explicit-`%` rule applies to `BondGuard._parse_rate()` and `FinanceVeri
 ### Exact arithmetic with Decimal
 
 <Info>
-**Since the Decimal/mpmath migration:** `BondGuard` runs Newton-Raphson YTM solving and all duration, convexity, and accrued-interest math in `Decimal` with 50-digit precision (`getcontext().prec = 50`). Inputs are converted to `Decimal` at the boundary, eliminating IEEE-754 cancellation in long-dated bond cashflow sums.
+**Since v2.1.0:** `BondGuard` runs Newton-Raphson YTM solving and all duration, convexity, and accrued-interest math in `Decimal` with 50-digit precision (`getcontext().prec = 50`). Inputs are converted to `Decimal` at the boundary, eliminating IEEE-754 cancellation in long-dated bond cashflow sums.
 
-`tolerance_pct` is now stored as `Decimal`. Pass a `float` or `int` — the guard converts it via `Decimal(str(value))` to avoid float contamination:
+`tolerance_pct` is now stored as `Decimal`. Pass a `float` or `int`; the guard converts it with `Decimal(str(value))` to avoid float contamination:
 
 ```python
 # Both are safe
@@ -377,9 +381,9 @@ guard = BondGuard(tolerance_pct="0.5")
 Other methods: `verify_accrued_interest()` and `verify_dirty_price()`.
 </Info>
 
-## 9. FX guard (currency arbitration)
+## 9. FX guard (currency conversion)
 
-**Purpose:** Validate cross-currency conversions and detect arbitrage opportunities.
+**Purpose:** Check currency conversions, cross and forward rates, and arbitrage decisions.
 
 ```python
 from qwed_finance import FXGuard
@@ -394,7 +398,7 @@ result = guard.verify_currency_conversion(
     from_currency="USD",
     to_currency="EUR",
 )
-# result.verified = True ✅
+# result.verified = True
 # result.computed_value = "EUR 920.00"
 ```
 
@@ -415,7 +419,7 @@ Pass `llm_converted` as a plain number (`"920.00"`). A leading currency symbol (
 
 ## 10. Risk guard (portfolio metrics)
 
-**Purpose:** Ensure risk metrics like Sharpe Ratio and VaR (Value at Risk) are mathematically consistent.
+**Purpose:** Recompute risk metrics such as the Sharpe ratio and value at risk (VaR) and compare them with the model's figures.
 
 ```python
 from qwed_finance import RiskGuard
@@ -430,14 +434,14 @@ result = guard.verify_sharpe_ratio(
     portfolio_volatility=0.15,
     llm_sharpe="0.60"
 )
-# result.verified = True ✅
+# result.verified = True
 # result.computed_value = "0.6000"
 ```
 
 ### Exact arithmetic with Decimal
 
 <Info>
-**Since the Decimal/mpmath migration:** every `RiskGuard` method computes in `Decimal`. `verify_var` and `verify_sortino_ratio` use `Decimal.sqrt()` instead of `math.sqrt()`, and `verify_beta` accumulates covariance and variance in `Decimal` to prevent catastrophic cancellation on large return histories.
+**Since v2.1.0:** every `RiskGuard` method computes in `Decimal`. `verify_var` and `verify_sortino_ratio` use `Decimal.sqrt()` instead of `math.sqrt()`, and `verify_beta` accumulates covariance and variance in `Decimal` to prevent catastrophic cancellation on large return histories.
 
 The `Z_SCORES` lookup table is `Decimal`-typed:
 
@@ -472,7 +476,7 @@ result = guard.verify_order(
     volume=100,
     side="buy",
 )
-# result.verified = False ❌
+# result.verified = False
 # result.risk = "TICK_SIZE_MISMATCH"
 # result.message = "Price 0.425 is not a multiple of tick size 0.01"
 ```
