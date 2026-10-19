@@ -1,7 +1,7 @@
 ---
 sidebar_position: 2
 title: "Open Responses"
-description: "Intercept and verify LLM tool calls in agentic loops with QWED-Finance. OpenAI-compatible tool schemas and verified results with cryptographic receipts."
+description: "Check LLM tool calls in agent loops with QWED Finance: OpenAI-compatible tool schemas, fail-closed handling of unknown tools, and receipts for audit."
 ---
 
 ## Quick start
@@ -25,7 +25,7 @@ print(result.result)  # {"npv": "$388.77", "verified": False, "computed": True, 
 ```
 
 <Warning>
-Built-in tool calls (NPV, loan, AML, options) return `ToolCallStatus.COMPUTED` — meaning the result was computed deterministically but **not** verified against an LLM claim. Only tools with a custom `verification_fn` that compare against an LLM output can return `ToolCallStatus.APPROVED`.
+Built-in tool calls (NPV, loan, AML, options) return `ToolCallStatus.COMPUTED`: the result was computed deterministically but **not** verified against an LLM claim. Only tools with a custom `verification_fn` that compare against an LLM output can return `ToolCallStatus.APPROVED`.
 </Warning>
 
 ---
@@ -37,7 +37,7 @@ Built-in tool calls (NPV, loan, AML, options) return `ToolCallStatus.COMPUTED` �
 </Note>
 
 ```python
-# ❌ This tool will be REJECTED — no verification function
+# This tool will be REJECTED: it has no verification function
 qwed.register_tool(
     name="transfer_funds",
     description="Transfer money",
@@ -108,7 +108,7 @@ All built-in tools return `COMPUTED` status because they perform deterministic c
 
 ### AML country consistency
 
-The `check_aml_compliance` tool delegates to `ComplianceGuard.high_risk_countries` for its sanctions list, ensuring a **single source of truth** across the entire QWED-Finance system.
+The `check_aml_compliance` tool delegates to `ComplianceGuard.high_risk_countries` for its high-risk country list, so the tool and the guard use the same list.
 
 ### Black-Scholes input validation
 
@@ -117,10 +117,10 @@ The `price_option` tool rejects non-positive inputs for `spot_price`, `strike_pr
 ### Black-Scholes single source of truth
 
 <Note>
-**Since N-01 fix:** `price_option` delegates to `DerivativesGuard.verify_black_scholes()` — the same `mpmath` (30 dp) implementation used by direct guard calls. This guarantees that pricing through the OpenResponses integration and pricing through `DerivativesGuard` produce **identical** outputs for identical inputs.
+`price_option` delegates to `DerivativesGuard.verify_black_scholes()`, the same `mpmath` (30 decimal places) implementation used by direct guard calls, so pricing through the OpenResponses integration and pricing through `DerivativesGuard` produce **identical** outputs for identical inputs.
 </Note>
 
-Previously, the integration shipped its own IEEE-754 `float`-based Black-Scholes routine (`math.log/exp/sqrt/erf`). Same formula, two precision paths — same input could yield two different outputs depending on call site. The duplicate has been removed.
+Previously, the integration shipped its own IEEE-754 `float`-based Black-Scholes routine (`math.log/exp/sqrt/erf`). Same formula, two precision paths: the same input could give two different outputs depending on the call site. The duplicate has been removed.
 
 The tool result now reports the computed price and `delta` Greek straight from the guard's quantized `Decimal` output:
 
@@ -134,8 +134,8 @@ result = qwed.handle_tool_call("price_option", {
     "option_type": "call",
 })
 
-print(result.result["price"])  # "$10.45" — mpmath, deterministic, rounded to cents
-print(result.result["delta"])  # e.g. "0.6368" — Decimal-quantized string
+print(result.result["price"])  # "$10.45": mpmath, rounded to cents
+print(result.result["delta"])  # "0.6368": a Decimal-quantized string
 ```
 
 ---
@@ -219,32 +219,51 @@ for tool_call in response.choices[0].message.tool_calls:
 
 ## Custom tools
 
-Register your own verified tools. A `verification_fn` is **required** — tools without one are rejected.
+Register your own verified tools. A `verification_fn` is **required**: tools without one are rejected.
 
 ```python
+from decimal import Decimal
 from qwed_finance import VerifiedToolCall, ToolCallStatus
 
 def verify_my_calculation(args):
-    # Your verification logic here
-    computed = do_deterministic_math(args)
+    # Recompute the value, then compare it with the model's claim.
+    computed = do_deterministic_math(args)  # returns a Decimal
+    claimed = args.get("claimed_value")
+    if claimed is None or Decimal(str(claimed)) != computed:
+        return VerifiedToolCall(
+            status=ToolCallStatus.REJECTED,
+            tool_name="my_tool",
+            original_args=args,
+            error=f"claimed {claimed}, computed {computed}",
+        )
     return VerifiedToolCall(
         status=ToolCallStatus.APPROVED,
         tool_name="my_tool",
         original_args=args,
         verified_args=args,
-        result={"value": computed}
+        result={"value": str(computed)},
     )
 
 qwed.register_tool(
     name="my_tool",
     description="My custom calculation",
-    parameters={"type": "object", "properties": {...}},
+    parameters={
+        "type": "object",
+        "properties": {
+            # ...the inputs do_deterministic_math(args) reads...
+            "claimed_value": {
+                "type": "string",
+                "description": "The value the model claims, checked against the computed one",
+            },
+        },
+        "required": ["claimed_value"],  # plus the inputs your calculation needs
+    },
     verification_fn=verify_my_calculation  # Required!
 )
 ```
 
 <Warning>
-If your `verification_fn` raises an exception, it will be caught by the error boundary and return `ToolCallStatus.ERROR` with a descriptive message — the agent loop will not crash.
+If your `verification_fn` raises an exception, it will be caught by the error boundary and return `ToolCallStatus.ERROR` with a descriptive message, so the agent loop does not crash.
 </Warning>
 
 ---

@@ -1,7 +1,7 @@
 ---
 sidebar_position: 1
 title: "UCP integration"
-description: "Connect QWED-Finance to the Universal Commerce Protocol (UCP) for AI-driven e-commerce payment verification, capability discovery, and transaction attestation."
+description: "Use QWED Finance with the Universal Commerce Protocol (UCP): payment checks for AI commerce, capability discovery, and receipts for each decision."
 ---
 
 ## Quick start
@@ -23,7 +23,7 @@ result = ucp.verify_payment_token({
     "kyc_verified": True
 })
 
-print(result.can_proceed)  # True ✅
+print(result.can_proceed)  # True
 print(result.status)       # PaymentStatus.APPROVED
 ```
 
@@ -138,9 +138,10 @@ else:
                     │ • Currency  │
                     │ • AML       │
                     │ • KYC       │
-                    │ • Sanctions │
                     └─────────────┘
 ```
+
+`verify_payment_token` runs these four checks. `verify_iso20022_payment` also screens the parties against the `sanctions_list` you pass.
 
 For ISO 20022 messages, the business limits (`max_transaction_amount`, positive amount, `allowed_currencies`) apply to the amounts and currencies read from the parsed XML (since v3.0.0; hardened in v3.0.1, [GHSA-mrrj-6m2q-jch9](https://github.com/QWED-AI/qwed-finance/security/advisories/GHSA-mrrj-6m2q-jch9)). An empty or missing `sanctions_list` fails closed as unscreened instead of passing.
 

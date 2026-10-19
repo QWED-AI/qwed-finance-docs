@@ -1,7 +1,7 @@
 ---
-title: "Introduction"
+title: "QWED Finance: verification for financial AI"
 sidebarTitle: "Introduction"
-description: "QWED Finance: deterministic verification for financial AI and agent pipelines (v3.0.1)."
+description: "QWED Finance checks what financial AI produces, from NPV and option prices to AML flags, payment messages and SQL, with deterministic code before it is used."
 icon: "shield-check"
 ---
 
@@ -13,9 +13,40 @@ icon: "shield-check"
 
 **QWED Finance** is a verification library for AI financial agents, banking pipelines, and financial LLM applications. An LLM proposes a number, a decision, a payment message, or a query; QWED Finance recomputes or checks it deterministically before your system acts on it.
 
-It combines formal and exact tools: **SymPy** for cash-flow math, **Z3** for compliance logic, **mpmath** and `Decimal` for pricing and risk, an XML/schema validator for ISO 20022 and SWIFT, and an **SQLGlot** AST parser for SQL safety.
+It combines formal and high-precision tools: **SymPy** for cash-flow maths, **Z3** for the AML rule, **mpmath** and `Decimal` for pricing and risk, XML parsing with required-element rules for ISO 20022, field checks on the framed text of SWIFT MT messages, and the **SQLGlot** parser for SQL safety.
 
 > **The principle:** LLM text generation is probabilistic; financial accounting is exact. QWED Finance checks LLM outputs against deterministic computations and fails closed when an input is ambiguous or malformed.
+
+---
+
+## Get started
+
+<CodeGroup>
+
+```bash Python
+pip install qwed-finance==3.0.1
+```
+
+```bash Node.js
+npm install @qwed-ai/finance@3.0.1
+pip install qwed-finance==3.0.1
+```
+
+</CodeGroup>
+
+<Steps>
+  <Step title="Take the model's claim">
+    A figure, a decision, a payment message or a query your model produced.
+  </Step>
+  <Step title="Call the guard for it">
+    For example `verify_npv` for an NPV, `verify_aml_flag` for an AML decision, or `verify_readonly_safety` for a query. The guard recomputes or checks it.
+  </Step>
+  <Step title="Act only on a verified result">
+    A rejected or unparseable result goes back to the model or to a person, never into your systems.
+  </Step>
+</Steps>
+
+The [Quickstart](/quickstart) runs a full example in Python and Node.js.
 
 ---
 

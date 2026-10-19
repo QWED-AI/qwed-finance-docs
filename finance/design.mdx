@@ -1,31 +1,22 @@
 ---
 sidebar_position: 5
 title: "Design and architecture"
-description: "QWED-Finance system architecture with C4 diagrams showing integration with core banking systems, SWIFT messaging, regulators, and downstream audit pipelines."
+description: "How QWED Finance is built: the guard modules, the engine each one uses, how receipts are made, and the design rules every check follows."
 ---
 
-This page provides a deep dive into the internal design of QWED-Finance.
+This page describes how QWED Finance is organised inside.
 
-## System overview
+## Where it runs
+
+QWED Finance is a library. It runs inside your process and makes no network calls. Your code calls a guard with the model's output, and decides what to do with the result: act on it, hold it, or send it to a person.
 
 ```mermaid
-C4Context
-    title QWED-Finance System Context
-    
-    Person(user, "Banking Customer", "Interacts with banking services")
-    Person(agent, "Banking Agent", "LLM-powered assistant")
-    
-    System(qwed, "QWED-Finance", "Deterministic verification middleware")
-    
-    System_Ext(bank, "Core Banking", "Transaction processing")
-    System_Ext(swift, "SWIFT Network", "International payments")
-    System_Ext(regulator, "Regulators", "RBI, FinCEN, OFAC")
-    
-    Rel(user, agent, "Requests")
-    Rel(agent, qwed, "Verifies outputs")
-    Rel(qwed, bank, "Approved transactions")
-    Rel(qwed, swift, "Verified messages")
-    Rel(qwed, regulator, "Audit receipts")
+flowchart LR
+    Model["Language model"] -->|"figure, decision,<br/>message or query"| App["Your application"]
+    App -->|"calls a guard"| QWED["QWED Finance<br/>(in your process)"]
+    QWED -->|"result and, for some calls,<br/>a receipt"| App
+    App -->|"verified"| Act["Your bank, payment<br/>or data systems"]
+    App -->|"rejected"| Hold["Hold, retry or<br/>human review"]
 ```
 
 ## Guard architecture
@@ -36,38 +27,38 @@ C4Context
 graph TB
     subgraph "qwed_finance/"
         direction TB
-        
-        subgraph "Guards (Domain Logic)"
-            CG["compliance_guard.py<br/>AML/KYC/Sanctions"]
-            CAL["calendar_guard.py<br/>Day Count Conventions"]
-            DG["derivatives_guard.py<br/>Black-Scholes"]
-            MG["message_guard.py<br/>ISO 20022 / SWIFT"]
-            QG["query_guard.py<br/>SQL Safety"]
-            XG["cross_guard.py<br/>Multi-layer"]
-            BG["bond_guard.py<br/>YTM / Duration"]
-            FXG["fx_guard.py<br/>FX Rates"]
-            RG["risk_guard.py<br/>VaR / Ratios"]
+
+        subgraph "Guards"
+            CG["compliance_guard.py<br/>AML, KYC, limits, sanctions"]
+            CAL["calendar_guard.py<br/>Day-count conventions"]
+            DG["derivatives_guard.py<br/>Black-Scholes, margin"]
+            MG["message_guard.py<br/>ISO 20022, SWIFT MT"]
+            QG["query_guard.py<br/>SQL safety"]
+            XG["cross_guard.py<br/>Several guards at once"]
+            BG["bond_guard.py<br/>YTM, duration"]
+            FXG["fx_guard.py<br/>FX rates"]
+            RG["risk_guard.py<br/>VaR, ratios"]
             ISO["guards/iso_guard.py<br/>ISO 20022 JSON"]
-            TG["guards/trading_guard.py<br/>Order Parameters"]
+            TG["guards/trading_guard.py<br/>Order parameters"]
         end
-        
-        subgraph "Models (Data Structures)"
+
+        subgraph "Models"
             Receipt["models/receipt.py<br/>VerificationReceipt"]
-            Schemas["schemas.py<br/>LoanSchema, etc."]
+            Schemas["schemas.py<br/>LoanSchema and others"]
         end
-        
-        subgraph "Integrations (External APIs)"
+
+        subgraph "Integrations"
             OR["integrations/open_responses.py"]
             UCP["integrations/ucp.py"]
         end
-        
+
         subgraph "Core"
-            FV["finance_verifier.py<br/>NPV, IRR, Loans"]
+            FV["finance_verifier.py<br/>NPV, IRR, loans"]
         end
     end
-    
-    subgraph "External Engines"
-        Z3["Z3 SMT Solver"]
+
+    subgraph "Engines"
+        Z3["Z3 SMT solver"]
         SymPy["SymPy"]
         MP["mpmath"]
         SQLGlot["SQLGlot"]
@@ -88,114 +79,82 @@ graph TB
 
 ## Verification flow
 
-### State machine
+Every check follows the same path. Input that cannot be parsed, or that a check detects as ambiguous, fails closed: it is rejected, never passed through as if it were correct. Not every ambiguity is detected: cash flows that change sign more than once can have several IRRs (`[-100, 230, -132]` has roots at 10% and 20%), and `verify_irr` checks the claim against the first real root it finds instead of rejecting the input. Most guards return a rejected result; some methods raise instead (for example `verify_irr` raises `ValueError` for a claim that is not a number), so treat an exception from a guard as a rejection too.
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Received: LLM Output
-    
-    Received --> Parsing: Extract Data
-    Parsing --> GuardSelection: Detect Type
-    
-    GuardSelection --> ComplianceCheck: Financial Amount
-    GuardSelection --> CalendarCheck: Date Calculation
-    GuardSelection --> DerivativesCheck: Options/Greeks
-    GuardSelection --> MessageCheck: XML/SWIFT
-    GuardSelection --> QueryCheck: SQL Query
-    
-    ComplianceCheck --> SymbolicProof
-    CalendarCheck --> SymbolicProof
-    DerivativesCheck --> SymbolicProof
-    MessageCheck --> SchemaValidation
-    QueryCheck --> ASTAnalysis
-    
-    SymbolicProof --> ReceiptGeneration
-    SchemaValidation --> ReceiptGeneration
-    ASTAnalysis --> ReceiptGeneration
-    
-    ReceiptGeneration --> Approved: verified=True
-    ReceiptGeneration --> Rejected: verified=False
-    ReceiptGeneration --> PendingReview: UCP PENDING_REVIEW
-    
-    Approved --> [*]
-    Rejected --> [*]
-    PendingReview --> [*]
+flowchart TD
+    Call["Your code calls a guard<br/>with the model's output"] --> Parse{"Inputs parse and<br/>are within range?"}
+    Parse -->|"no"| Reject["Rejected<br/>(fails closed)"]
+    Parse -->|"yes"| Check["Recompute or check<br/>with the guard's engine"]
+    Check --> Match{"Matches the model's claim<br/>or the rule?"}
+    Match -->|"yes"| Pass["Verified"]
+    Match -->|"no"| Fail["Rejected, with the computed<br/>value or the violations"]
 ```
+
+`CrossGuard`, `UCPIntegration` and the built-in `OpenResponsesIntegration` tools also issue receipts. `UCPIntegration` can return `PENDING_REVIEW` when an amount needs an AML flag.
 
 ## Data flow
 
-### Verification receipt lifecycle
+### Verification receipt
 
 ```mermaid
 flowchart LR
     subgraph Input
-        LLM["LLM Output"]
+        LLM["Model output"]
     end
-    
+
     subgraph Processing
-        Hash["SHA-256<br/>Input Hash"]
-        Guard["Guard<br/>Verification"]
-        Proof["Symbolic<br/>Proof Steps"]
+        Hash["SHA-256<br/>input hash"]
+        Guard["Guard<br/>check"]
+        Proof["Proof steps"]
     end
-    
+
     subgraph Output
-        Receipt["Verification<br/>Receipt"]
-        Log["Audit<br/>Log"]
+        Receipt["Verification<br/>receipt"]
+        Sig["HMAC-SHA256 signature<br/>(optional, your key)"]
+        Log["Audit log"]
     end
-    
+
     LLM --> Hash
     LLM --> Guard
     Guard --> Proof
     Hash --> Receipt
     Proof --> Receipt
+    Receipt -.-> Sig
     Receipt --> Log
 ```
 
-### Cross-guard pipeline
+Receipts are unsigned until you call `get_signature(key)`. See [Compliance and auditing](/finance/compliance).
+
+### Cross-guard pipeline: SWIFT with sanctions
+
+`CrossGuard.verify_swift_with_sanctions()` runs three steps.
 
 ```mermaid
 flowchart TD
-    Input["SWIFT MT103 Message"]
-    
-    subgraph "Cross-Guard Pipeline"
-        Step1["1. Message Guard<br/>Validate MT103 Format"]
-        Step2["2. Extract Entities<br/>Debtor/Creditor Names"]
-        Step3["3. Compliance Guard<br/>Sanctions Screening"]
-        Step4["4. Query Guard<br/>Database Lookup Safety"]
+    Input["SWIFT MT103 message"]
+
+    subgraph "Cross-guard pipeline"
+        Step1["1. Message guard<br/>Validate the MT103 format"]
+        Step2["2. Extract party names<br/>from the message"]
+        Step3["3. Sanctions screening<br/>against the list you pass"]
     end
-    
-    Output1["✅ All Clear"]
-    Output2["❌ Sanctions Hit"]
-    Output3["⚠️ Format Error"]
-    
+
+    Output1["Passed"]
+    Output2["Sanctions hit"]
+    Output3["Format error"]
+    Output4["Unscreened: no sanctions list"]
+
     Input --> Step1
-    Step1 -->|Valid| Step2
-    Step1 -->|Invalid| Output3
+    Step1 -->|"valid"| Step2
+    Step1 -->|"invalid"| Output3
     Step2 --> Step3
-    Step3 -->|Clear| Step4
-    Step3 -->|Hit| Output2
-    Step4 --> Output1
+    Step3 -->|"clear"| Output1
+    Step3 -->|"hit"| Output2
+    Step3 -->|"empty or missing list"| Output4
 ```
 
-## Engine selection matrix
-
-```mermaid
-quadrantChart
-    title Guard-to-Engine Mapping
-    x-axis "Numeric Precision" --> "Logical Completeness"
-    y-axis "Simple" --> "Complex"
-    
-    quadrant-1 "Formal Proofs"
-    quadrant-2 "Calculations"
-    quadrant-3 "Parsing"
-    quadrant-4 "Validation"
-    
-    "Compliance (Z3)": [0.8, 0.7]
-    "Calendar (Decimal)": [0.3, 0.4]
-    "Derivatives (Math)": [0.2, 0.6]
-    "Message (XML)": [0.6, 0.3]
-    "Query (AST)": [0.7, 0.5]
-```
+An empty or missing sanctions list fails closed as unscreened. A name the screening cannot assess is sent to review, never cleared.
 
 ## Class diagram
 
@@ -208,7 +167,7 @@ classDiagram
         +verify_total_interest(principal, annual_rate, months, llm_output)
         +verify_compound_interest(principal, rate, periods, llm_output, compounding)
     }
-    
+
     class ComplianceGuard {
         -aml_thresholds: dict
         -high_risk_countries: set
@@ -217,23 +176,23 @@ classDiagram
         +verify_sanctions_check(entity_name, is_on_sanctions_list, llm_approved)
         +verify_transaction_limit(amount, daily_limit, daily_total, llm_approved)
     }
-    
+
     class MessageGuard {
-        +verify_iso20022_xml(xml, type)
-        +verify_swift_mt(message, type)
+        +verify_iso20022_xml(xml_string, msg_type)
+        +verify_swift_mt(mt_string, mt_type)
         +verify_bic(bic, llm_says_valid)
         +verify_iban(iban, llm_says_valid)
     }
-    
+
     class QueryGuard {
         -allowed_tables: Set
-        +verify_readonly_safety(sql)
-        +verify_table_access(sql, allowed_tables)
-        +verify_column_access(sql, restricted_columns)
-        +verify_no_injection(sql, user_input)
-        +sanitize_query(sql)
+        +verify_readonly_safety(sql_query)
+        +verify_table_access(sql_query, allowed_tables)
+        +verify_column_access(sql_query, restricted_columns)
+        +verify_no_injection(sql_query, user_input)
+        +sanitize_query(sql_query)
     }
-    
+
     class VerificationReceipt {
         +receipt_id: str
         +timestamp: str
@@ -243,7 +202,7 @@ classDiagram
         +to_json()
         +get_signature(key)
     }
-    
+
     class CrossGuard {
         -compliance: ComplianceGuard
         -message: MessageGuard
@@ -261,41 +220,11 @@ classDiagram
     CrossGuard --> QueryGuard : uses
 ```
 
-## Deployment architecture
+## Deployment
 
-```mermaid
-flowchart TB
-    subgraph "Production Environment"
-        subgraph "API Layer"
-            FastAPI["Your API Server"]
-            Express["Node.js App<br/>(@qwed-ai/finance)"]
-        end
-        
-        subgraph "QWED-Finance"
-            Guards["11 Guards"]
-            Audit["Audit Log"]
-        end
-        
-        subgraph "Storage"
-            Redis["Redis<br/>(Receipt Cache)"]
-            S3["S3/GCS<br/>(Audit Archive)"]
-        end
-    end
-    
-    subgraph "External"
-        LLM["LLM API"]
-        Bank["Bank API"]
-    end
-    
-    LLM --> FastAPI
-    LLM --> Express
-    FastAPI --> Guards
-    Express --> Guards
-    Guards --> Audit
-    Audit --> Redis
-    Audit --> S3
-    Guards --> Bank
-```
+- **Python:** install `qwed-finance` and call the guards from your service.
+- **Node.js:** `@qwed-ai/finance` runs the Python package in a child process and passes JSON over stdin; install `qwed-finance` on the same machine. See the [Quickstart](/quickstart).
+- **Receipts and audit logs:** `AuditLog` keeps receipts in memory. `export_json()` returns all of them as one JSON array, which suits reporting. To check receipts later, export each one with `to_json()` beside its signature, one pair per receipt, as shown in [Compliance and auditing](/finance/compliance).
 
 ---
 
@@ -303,24 +232,24 @@ flowchart TB
 
 ### 1. Determinism first
 
-Every verification produces the **same result** for the same input. No randomness.
+The same input gives the same verdict. No sampling, no confidence scores.
 
-### 2. Symbolic over statistical
+### 2. Solvers and high precision over probability
 
-Use solvers and exact arithmetic (Z3, SymPy, mpmath, `Decimal`) instead of probabilistic confidence scores.
+Use solvers (Z3, SymPy) and high-precision arithmetic (mpmath, `Decimal`) instead of probabilistic confidence scores. The numerical checks run at a fixed, finite precision (30 decimal places for `DerivativesGuard`, 50 digits for `BondGuard`) and accept claims within a stated tolerance: they are repeatable, not exact symbolic answers. The IRR fallback reports `verification_mode="HEURISTIC"`.
 
 ### 3. Audit where it matters
 
-`CrossGuard`, `UCPIntegration`, and the built-in `OpenResponsesIntegration` tools generate receipts automatically. Direct guard calls and custom Open Responses tools return result objects; create a receipt with `ReceiptGenerator` when you need an audit record. Invalid input fails closed instead of passing silently.
+`CrossGuard`, `UCPIntegration` and the built-in `OpenResponsesIntegration` tools generate receipts automatically. Direct guard calls and custom Open Responses tools return result objects; create a receipt with `ReceiptGenerator` when you need an audit record.
 
-### 4. Defense in depth
+### 4. Fail closed
 
-Cross-Guard combines multiple guards for layered security.
+Input that is malformed, ambiguous or missing is rejected, never treated as passing.
 
 ---
 
 ## Related pages
 
-- [Overview](/finance/overview) — Introduction and quick start
-- [The 11 guards](/finance/guards) — Guard implementation details
-- [Compliance & Auditing](/finance/compliance) — Receipt and audit log details
+- [Overview](/finance/overview): what QWED Finance checks
+- [The 11 guards](/finance/guards): each guard with examples
+- [Compliance and auditing](/finance/compliance): receipts and audit logs
