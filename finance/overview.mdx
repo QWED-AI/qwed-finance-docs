@@ -160,7 +160,7 @@ QWED Finance checks each of these with deterministic code:
 
 The checks implement parts of these rules and standards. Using QWED Finance does not make a system compliant with them: that is for your own compliance review.
 
-- **BSA/FinCEN**: the 10,000 currency transaction report threshold in `verify_aml_flag` (amounts are compared as given; see [the Compliance guard](/finance/guards))
+- **BSA/FinCEN**: `verify_aml_flag` requires a flag at or above the 10,000 currency transaction report threshold, and for a high-risk country whatever the amount (amounts are compared as given; see [the Compliance guard](/finance/guards))
 - **OFAC and other sanctions lists**: name screening against a list you supply
 - **ISO 20022 and SWIFT MT**: message structure and business-rule checks
 - **RBI FREE-AI (India)**: receipts and audit logs as records of how an AI output was checked

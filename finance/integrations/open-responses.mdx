@@ -247,7 +247,17 @@ def verify_my_calculation(args):
 qwed.register_tool(
     name="my_tool",
     description="My custom calculation",
-    parameters={"type": "object", "properties": {...}},
+    parameters={
+        "type": "object",
+        "properties": {
+            # ...the inputs do_deterministic_math(args) reads...
+            "claimed_value": {
+                "type": "string",
+                "description": "The value the model claims, checked against the computed one",
+            },
+        },
+        "required": ["claimed_value"],  # plus the inputs your calculation needs
+    },
     verification_fn=verify_my_calculation  # Required!
 )
 ```

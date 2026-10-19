@@ -79,7 +79,7 @@ graph TB
 
 ## Verification flow
 
-Every check follows the same path. Input that cannot be parsed, or that is ambiguous, fails closed: it is rejected, never passed through as if it were correct. Most guards return a rejected result; some methods raise instead (for example `verify_irr` raises `ValueError` for a claim that is not a number), so treat an exception from a guard as a rejection too.
+Every check follows the same path. Input that cannot be parsed, or that a check detects as ambiguous, fails closed: it is rejected, never passed through as if it were correct. Not every ambiguity is detected: cash flows that change sign more than once can have several IRRs (`[-100, 230, -132]` has roots at 10% and 20%), and `verify_irr` checks the claim against the first real root it finds instead of rejecting the input. Most guards return a rejected result; some methods raise instead (for example `verify_irr` raises `ValueError` for a claim that is not a number), so treat an exception from a guard as a rejection too.
 
 ```mermaid
 flowchart TD
