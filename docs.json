@@ -33,11 +33,11 @@
       },
       {
         "label": "QWED Docs",
-        "href": "https://docs.qwedai.com"
+        "href": "https://docs.qwedai.tech"
       },
       {
         "label": "Support",
-        "href": "mailto:rahul@qwedai.com"
+        "href": "mailto:support@qwedai.tech"
       }
     ],
     "primary": {
@@ -137,27 +137,27 @@
         "items": [
           {
             "label": "QWED Docs",
-            "href": "https://docs.qwedai.com"
+            "href": "https://docs.qwedai.tech"
           },
           {
             "label": "QWED UCP",
-            "href": "https://docs.qwedai.com/ucp/overview"
+            "href": "https://docs.qwedai.tech/ucp/overview"
           },
           {
             "label": "QWED MCP",
-            "href": "https://docs.qwedai.com/mcp/overview"
+            "href": "https://docs.qwedai.tech/mcp/overview"
           },
           {
             "label": "Open Responses",
-            "href": "https://docs.qwedai.com/open-responses/overview"
+            "href": "https://docs.qwedai.tech/open-responses/overview"
           },
           {
             "label": "QWED Legal",
-            "href": "https://docs.qwedai.com/legal/overview"
+            "href": "https://docs.qwedai.tech/legal/overview"
           },
           {
             "label": "QWED A2A",
-            "href": "https://docs.qwedai.com/a2a/overview"
+            "href": "https://docs.qwedai.tech/a2a/overview"
           }
         ]
       },
@@ -166,11 +166,11 @@
         "items": [
           {
             "label": "Releases",
-            "href": "https://docs.qwedai.com/releases"
+            "href": "https://docs.qwedai.tech/releases"
           },
           {
             "label": "Changelog",
-            "href": "https://docs.qwedai.com/changelog"
+            "href": "https://docs.qwedai.tech/changelog"
           },
           {
             "label": "License",
