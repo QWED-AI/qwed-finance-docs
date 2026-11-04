@@ -3,23 +3,20 @@
   "theme": "aspen",
   "name": "QWED Finance",
   "colors": {
-    "primary": "#2340D9",
-    "light": "#9AABFF",
-    "dark": "#3A56E6"
+    "primary": "#B23E10",
+    "light": "#FF9A6B",
+    "dark": "#C8461A"
   },
   "fonts": {
     "heading": {
-      "family": "Bricolage Grotesque",
-      "weight": 700
+      "family": "Geist",
+      "weight": 600
     },
     "body": {
-      "family": "Instrument Sans"
+      "family": "Geist"
     }
   },
-  "favicon": {
-    "light": "/images/brand/favicon-ink.png",
-    "dark": "/images/brand/favicon-white.png"
-  },
+  "favicon": "/images/brand/favicon.svg",
   "logo": {
     "light": "/images/brand/qwed-finance-lockup.svg",
     "dark": "/images/brand/qwed-finance-lockup-white.svg",
@@ -209,8 +206,8 @@
   },
   "background": {
     "color": {
-      "dark": "#0C0C0C",
-      "light": "#FFFFFF"
+      "dark": "#0E1714",
+      "light": "#F6F7F5"
     }
   }
 }
